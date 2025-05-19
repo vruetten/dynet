@@ -20,8 +20,7 @@ class Kernels:
         t = np.arange(0, duration, dt)
         shifted_t = np.maximum(t - delay, 0.0)
         kernel = (shifted_t / tau) * np.exp(1 - shifted_t / tau)
-        if normalize:
-            kernel /= np.sum(np.abs(kernel))
+        kernel /= np.sum(np.abs(kernel))
         return kernel, t
 
     @staticmethod
@@ -36,7 +35,7 @@ class Kernels:
         shifted_t = np.maximum(t - delay, 0.0)
         kernel = np.exp(-shifted_t / tau)
         if normalize:
-            kernel /= np.max(kernel)
+            kernel /= np.sum(np.abs(kernel))
         return kernel, t
 
     @staticmethod
@@ -80,6 +79,7 @@ class Kernels:
         Pure delay kernel: k[n] = δ[n - delay_steps]
         Used to shift a signal in time by delay seconds.
         """
+        t = np.arange(0, duration, dt)
         delay_steps = int(round(delay / dt))
         if duration is None:
             duration = (delay_steps + 2) * dt
@@ -118,8 +118,8 @@ class Kernels:
         phi = -omega * phase_delay
         kernel = envelope * np.sin(omega * t + phi)
 
-        if normalize and np.max(np.abs(kernel)) > 0:
-            kernel /= np.sum(np.abs(kernel))
+        # if normalize and np.max(np.abs(kernel)) > 0:
+        kernel /= np.sum(np.abs(kernel))
             # kernel /= kernel.shape[0]
             # kernel = kernel/np.sum(kernel)
 
@@ -156,17 +156,20 @@ class Kernels:
         # Combine phases
         kernel = np.concatenate([rise, sustain, decay])
         t = np.arange(0, len(kernel) * dt, dt)
+
+        
         
         # Add delay if specified
         if delay > 0:
             delay_steps = int(delay / dt)
             kernel = np.pad(kernel, (delay_steps, 0), mode='constant')
             t = np.arange(0, len(kernel) * dt, dt)
+        kernel = kernel / (np.sum(np.abs(kernel)) )
             
         return kernel, t
 
     @staticmethod
-    def gaussian_kernel(sigma: float, dt: float, duration: float = None, delay: float = 0.0) -> Tuple[np.ndarray, np.ndarray]:
+    def gaussian_kernel(sigma: float, dt: float, duration: float = None, delay: float = 0.0, normalize: bool = True) -> Tuple[np.ndarray, np.ndarray]:
         """
         Generate a Gaussian kernel.
         
@@ -182,18 +185,20 @@ class Kernels:
             Initial delay before the kernel starts (seconds)
         """
         if duration is None:
-            duration = 6 * sigma  # Cover 3 standard deviations on each side
-            
+            duration =8 * sigma  # Cover 3 standard deviations on each side
+
         t = np.arange(0, duration, dt)
         t_centered = t - duration/2  # Center the Gaussian
-        kernel = np.exp(-0.5 * (t_centered / sigma)**2)
+
+        kernel = np.exp(-0.5 * ((t_centered-delay) / sigma)**2)
         
-        # Normalize to have area = 1
-        kernel = kernel / (np.sum(kernel) * dt)
+
         
         if delay > 0:
             delay_steps = int(delay / dt)
             kernel = np.pad(kernel, (delay_steps, 0), mode='constant')
             t = np.arange(0, len(kernel) * dt, dt)
+        # Normalize to have area = 1
+        kernel = kernel / (np.sum(np.abs(kernel)) )
             
-        return kernel, t
+        return kernel, t_centered

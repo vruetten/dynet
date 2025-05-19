@@ -5,14 +5,14 @@ from network.nodes import (
     PoissonNode, FilteredExponentialNode, FilteredOscillatorNode,OscillatorNode, ExponentialNode
 )
 
-def plot_results(t: np.ndarray, y: np.ndarray, labels: List[str], network: 'FlexibleNetwork'):
-    """Plot the simulation results."""
-    n_states = y.shape[0]
-    fig, axes = plt.subplots(n_states, 2, figsize=(8, 2 * n_states), sharex='col')
-    
-    # Plot each node's state and derivative
+def plot_results(t: np.ndarray, y: np.ndarray, labels: List[str], network) -> None:
+    """Plot the results of a network simulation."""
+    n_nodes = len(network.nodes)
+    fig, axes = plt.subplots(n_nodes, 2, figsize=(15, 3*n_nodes))
+    if n_nodes == 1:
+        axes = axes.reshape(1, -1)
 
-    for i, node in enumerate(network.nodes):
+    for i, (node, title) in enumerate(zip(network.nodes, labels)):
         state_idx = i
         if isinstance(node, PoissonNode):
             title = f'{node.name}: Poisson (rate={node.firing_rate:.1f}Hz)'
@@ -30,7 +30,20 @@ def plot_results(t: np.ndarray, y: np.ndarray, labels: List[str], network: 'Flex
         axes[state_idx, 0].set_ylabel('Activity')
         axes[state_idx, 0].legend()
 
-    axes[-1, 0].set_xlabel('Time (s)')
-    axes[-1, 1].set_xlabel('Time (s)')
+        # Plot kernel if it exists
+        if hasattr(node, 'filter_kernel') and node.filter_kernel is not None:
+            kernel = node.filter_kernel
+            kernel_t = np.arange(len(kernel)) * node.dt
+            axes[state_idx, 1].plot(kernel_t, kernel)
+            axes[state_idx, 1].set_title(f'Kernel for {title}')
+            axes[state_idx, 1].set_xlabel('Time')
+            axes[state_idx, 1].set_ylabel('Amplitude')
+        else:
+            axes[state_idx, 1].set_visible(False)
+
+    # Set x labels only for the bottom row
+    for ax in axes[-1]:
+        ax.set_xlabel('Time')
+
     plt.tight_layout()
     plt.show()

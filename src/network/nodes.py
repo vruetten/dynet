@@ -9,27 +9,26 @@ class Node:
     Abstract base class for all dynamic nodes.
     Each node evolves over time based on internal state and weighted inputs from other nodes.
     """
-    def __init__(self, name: str, n_state: int = 1, delay: float = 0.0, noise_level: float = 0.0, initial_state: Optional[Union[float, np.ndarray]] = None):
+    def __init__(self, name: str, dt: float = 0.01, noise_level: float = 0.0):
         self.name = name
-        self.n_state = n_state
-        self.delay = delay
+        self.dt = dt
+        self.n_state = 1
+        self.initial_state = np.zeros(self.n_state)
         self.noise_level = noise_level
-        if initial_state is None:
-            self.initial_state = np.zeros(n_state)
-        else:
-            if isinstance(initial_state, (int, float)):
-                self.initial_state = np.full(n_state, initial_state)
-            else:
-                assert len(initial_state) == n_state, f"Initial state must have length {n_state}"
-                self.initial_state = np.array(initial_state)
+        self.state_slice = None  # Will be set by the network
 
-    def get_derivative(self, t: float, y: np.ndarray, input_val: float) -> np.ndarray:
-        raise NotImplementedError("Each node must implement its own dynamics.")
+    def get_derivative(self, t: float, state: np.ndarray, input_val: Union[float, np.ndarray]) -> np.ndarray:
+        raise NotImplementedError("Subclasses must implement get_derivative")
+
+    def reset_buffer(self):
+        pass
 
 # === Exponential Node ===
 class ExponentialNode(Node):
     def __init__(self, name: str, tau: float, **kwargs):
-        super().__init__(name, n_state=1, **kwargs)
+        super().__init__(name, **kwargs)
+        self.n_state = 1  # Set n_state here instead of passing to super()
+        self.initial_state = np.zeros(self.n_state)
         self.tau = tau
 
     def get_derivative(self, t: float, y: np.ndarray, input_val: float) -> np.ndarray:
@@ -39,15 +38,20 @@ class ExponentialNode(Node):
 
 # === Oscillator Node ===
 class OscillatorNode(Node):
-    def __init__(self, name: str, tau: float, freq: float, **kwargs):
-        super().__init__(name, n_state=2, **kwargs)
+    def __init__(self, name: str, tau: float, freq: float, initial_state: float = 0.0, **kwargs):
+        super().__init__(name, **kwargs)
+        self.n_state = 2  # Set n_state here instead of passing to super()
+        self.initial_state = np.array([initial_state, 0.0])  # [position, velocity]
         self.tau = tau
         self.freq = freq
 
     def get_derivative(self, t: float, y: np.ndarray, input_val: float) -> np.ndarray:
         gamma = 1 / self.tau
         omega = 2 * np.pi * self.freq
-        return np.array([y[1] , -2 * gamma * y[1] - omega**2 * y[0] + input_val])
+        dy = np.zeros(2)
+        dy[0] = y[1]
+        dy[1] = -2 * gamma * y[1] - omega**2 * y[0] + input_val
+        return dy
 
 # === FilteredNode Mixin ===
 class FilteredNode:
@@ -97,7 +101,9 @@ class FilteredOscillatorNode(OscillatorNode, FilteredNode):
 # === Stochastic Poisson Node ===
 class PoissonNode(Node):
     def __init__(self, name: str, firing_rate: float, **kwargs):
-        super().__init__(name, n_state=1, **kwargs)
+        super().__init__(name, **kwargs)
+        self.n_state = 1  # Set n_state here instead of passing to super()
+        self.initial_state = np.zeros(self.n_state)
         self.firing_rate = firing_rate
         self.tau = 0.01  # Decay time constant
 
