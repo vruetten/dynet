@@ -78,7 +78,7 @@ class FlexibleNetwork:
             outputs = np.zeros(len(self.nodes))
             for i, node in enumerate(self.nodes):
                 if isinstance(node, PoissonNode):
-                    outputs[i] = poisson_states[i][t_idx]/self.dt # a hack to make the other receive 1
+                    outputs[i] = poisson_states[i][t_idx]/self.dt 
                 else:
                     outputs[i] = y_vec[node.start_idx]
 

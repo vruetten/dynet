@@ -14,10 +14,10 @@ reload(saving)
 reload(network)
 
 # Parameters for scaling
-N = 1  # Number of nodes per kernel (same param and different param)
-N_poisson = 1  # Number of Poisson nodes
+N = 4  # Number of nodes per kernel (same param and different param)
+N_poisson = 6  # Number of Poisson nodes
 N_exponential = 5  # Number of exponential nodes
-N_oscillator = 1  # Number of oscillator nodes
+N_oscillator = 8  # Number of oscillator nodes
 T = 60  # Simulation duration
 DT = 0.01  # Time step
 np.random.seed(42)
@@ -31,23 +31,26 @@ for i in range(N_poisson):
     node = nodes.PoissonNode(f"Poisson_{i+1}", firing_rate=0.1 + 0.04 * i)
     net.add_node(node)
     node_types.append("Poisson")
-# for i in range(N_exponential):
-#     node = nodes.ExponentialNode("Exponential", tau=0.3)
-#     net.add_node(node)
-#     node_types.append("Exponential")
+for i in range(N_exponential):
+    node = nodes.ExponentialNode("Exponential", tau=0.3, noise_level=0.01 + 0.01 * i)
+    net.add_node(node)
+    node_types.append("Exponential")
 for i in range(N_oscillator):
-    node = nodes.OscillatorNode("Oscillator", tau=5+0.01*i, freq=1, initial_state=1)
+    if i == 0:
+        initial_state = 1
+    else:
+        initial_state = np.random.randn()
+    node = nodes.OscillatorNode("Oscillator", tau=5+0.01*i, freq=1, initial_state=initial_state)
     net.add_node(node)
     node_types.append("Oscillator")
 
 # --- Define various kernels and add N nodes for each ---
 kernels_to_use = [
-    # ("damped_oscillation", kernels.Kernels.growing_damped_oscillator, dict(frequency=1, tau_rise=0.2, tau_decay=2, delay=3), dict(noise_level=0.01, tau=0.3)),
-    # ("bump", kernels.Kernels.bump_kernel, dict(tau_rise=0.1, tau_sustain=3, tau_decay=0.2, delay=0.1), dict(noise_level=0.01, tau=0.3)),
-    # ("gaussian", kernels.Kernels.gaussian_kernel, dict(sigma=0.3,
-    #  delay=0), dict(noise_level=0.01, tau=0.3)),
-    ("exponential", kernels.Kernels.exponential_decay, dict(tau=0.3, delay=0.1), dict(noise_level=0.01, tau=3)),
-    # ("alpha", kernels.Kernels.alpha_function, dict(tau=0.3, delay=0.1), dict(noise_level=0.01, tau=0.3)),
+    ("damped_oscillation", kernels.Kernels.growing_damped_oscillator, dict(frequency=1, tau_rise=0.2, tau_decay=2, delay=3), dict(noise_level=0.01, tau=0.3)),
+    ("bump", kernels.Kernels.bump_kernel, dict(tau_rise=0.1, tau_sustain=3, tau_decay=0.2, delay=0.1), dict(noise_level=0.01, tau=0.3)),
+    ("gaussian", kernels.Kernels.gaussian_kernel, dict(sigma=0.3,delay=0), dict(noise_level=0.01, tau=0.3)),
+    # ("exponential", kernels.Kernels.exponential_decay, dict(tau=0.3, delay=0.1), dict(noise_level=0.01, tau=3)),
+    ("alpha", kernels.Kernels.alpha_function, dict(tau=0.3, delay=0.1), dict(noise_level=0.01, tau=0.3)),
 ]
 
 
@@ -91,22 +94,33 @@ n_bump = node_types.count("bump")
 n_gaussian = node_types.count("gaussian")
 n_exponential = node_types.count("exponential")
 n_alpha = node_types.count("alpha")
+poisson_nodes = np.where(np.array(node_types) == "Poisson")[0]
+oscillator_nodes = np.where(np.array(node_types) == "Oscillator")[0]
 for i, node_type in enumerate(np.unique(node_types)):
      print(node_type)
-     if node_type == "Poisson" or node_type == "Oscillator":
+     if node_type == "Poisson":
          pass
+     elif node_type == "Oscillator":
+         # connect all oscillator nodes to 
+         
+         first_oscillator_node = oscillator_nodes[0]
+         # connect first oscillator to random poisson node
+         poisson_node = np.random.choice(poisson_nodes)
+         conn[first_oscillator_node, poisson_node] = 1.0
+         for i, node in enumerate(oscillator_nodes[1:]):
+             conn[node, oscillator_nodes[i]] = 1.0
      else:
          # find all nodes of the same type
          same_type_nodes = np.where(np.array(node_types) == node_type)[0]
          #  print(same_type_nodes)
-         poisson_nodes = np.where(np.array(node_types) == "Poisson")[0]
+         
          poisson_node = np.random.choice(poisson_nodes)
          #  print(poisson_node)
          poisson_or_oscillator_nodes = np.where(np.logical_or(
              np.array(node_types) == "Poisson",
              np.array(node_types) == "Oscillator"
          ))[0]
-         poisson_or_oscillator_node = np.random.choice(poisson_or_oscillator_nodes)
+         poisson_or_oscillator_node = np.random.choice(poisson_nodes)
          for node in same_type_nodes:
              conn[node, poisson_or_oscillator_node] = 1.0
 
@@ -114,9 +128,6 @@ for i, node_type in enumerate(np.unique(node_types)):
 # pl.imshow(conn)
 # pl.colorbar()
 # pl.show()
-
-
-
 
 
 # conn = np.zeros((n_total, n_total))
@@ -149,8 +160,8 @@ duration = T
 y, labels, t = net.simulate(duration=duration)
 
 # --- Plot results ---
-plotting.plot_results(t, y, labels, net)
-#%%
+# plotting.plot_results(t, y, labels, net)
+
 # make a raster plot of the activity
 # raster_plot = plotting.raster_plot(t, y, labels, net)
 # raster_plot.savefig(f"{base_filename}_raster.png")
@@ -160,6 +171,7 @@ pl.imshow(y_norm, extent=[0, T, 0, n_total], cmap="gray")
 # pl.colorbar()
 pl.show()
 #%%
+reload(saving)
 # --- Save results ---
 output_dir = "data/generated_dataset"
 os.makedirs(output_dir, exist_ok=True)
@@ -168,18 +180,18 @@ metadata_df, activity_df = saving.save_network_data(net, y, t)
 metadata_df.to_csv(f"{base_filename}_metadata.csv", index=False)
 activity_df.to_csv(f"{base_filename}_activity.csv", index=False)
 
-
-
 print(f"Simulation completed. Results saved in: {output_dir}")
 
 
 #%%
 
-### FORMAT DATA
+### FORMAT DATA for GNN
 import pandas as pd
 # merge metadata_df and activity_df on "node_id" and index of activity_df
 merged_df = pd.merge(activity_df, metadata_df, left_on="node_id", right_on="node_id", how="left")
 mylist = [group for _, group in merged_df.groupby("time")]
+
+#%%
 
 
 

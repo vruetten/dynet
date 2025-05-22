@@ -32,9 +32,7 @@ class ExponentialNode(Node):
         self.tau = tau
 
     def get_derivative(self, t: float, y: np.ndarray, input_val: float) -> np.ndarray:
-        # if input_val >1e-1:
-            # print(f"input_val: {input_val}, t: {t}")
-        return np.array([(-y[0] / self.tau + input_val)])
+        return np.array([(-y[0] + input_val) / self.tau])
 
 # === Oscillator Node ===
 class OscillatorNode(Node):
@@ -49,8 +47,8 @@ class OscillatorNode(Node):
         gamma = 1 / self.tau
         omega = 2 * np.pi * self.freq
         dy = np.zeros(2)
-        dy[0] = y[1]
-        dy[1] = -2 * gamma * y[1] - omega**2 * y[0] + input_val
+        dy[0] = y[1]  # dx/dt = v
+        dy[1] = -2 * gamma * y[1] - omega**2 * y[0] + omega**2 * input_val  # dv/dt = -2γv - ω²x + ω²F(t)
         return dy
 
 # === FilteredNode Mixin ===

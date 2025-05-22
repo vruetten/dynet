@@ -42,12 +42,13 @@ def save_network_data(network, y, t, shape_descriptor_std=0.1):
     # Create activity dataframe
     activity_data = []
     for i, node in enumerate(network.nodes):
-        for t_idx, t_val in enumerate(t):
+        for t_idx, t_val in enumerate(t[1:]):
             activity_data.append({
                 'node_id': i,
                 'time': t_val,
                 'activity': y[i, t_idx],
-                'activity_derivative': network.derivatives[i, t_idx] if hasattr(network, 'derivatives') else 0.0
+                'activity_derivative': y[i, t_idx]-y[i, t_idx-1],
+                # 'activity_derivative': network.derivatives[i, t_idx] if hasattr(network, 'derivatives') else 0.0
             })
     
     activity_df = pd.DataFrame(activity_data)
