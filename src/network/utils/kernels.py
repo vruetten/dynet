@@ -126,7 +126,7 @@ class Kernels:
         return kernel, t
 
     @staticmethod
-    def bump_kernel(tau_rise: float, tau_sustain: float, tau_decay: float, dt: float, delay: float = 0.0) -> Tuple[np.ndarray, np.ndarray]:
+    def bump_kernel(tau_rise: float, tau_sustain: float, tau_decay: float, dt: float, delay: float = 0.0, duration: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray]:
         """
         Generate a kernel with exponential rise, sustained period, and exponential decay.
         
@@ -155,6 +155,11 @@ class Kernels:
         
         # Combine phases
         kernel = np.concatenate([rise, sustain, decay])
+        if duration is not None:
+            if len(kernel)<duration/dt:
+                kernel = np.concatenate([kernel, np.zeros(int(duration/dt - len(kernel)))])
+            else:
+                kernel = kernel[:int(duration/dt)]
         t = np.arange(0, len(kernel) * dt, dt)
 
         
@@ -188,17 +193,11 @@ class Kernels:
             duration =8 * sigma  # Cover 3 standard deviations on each side
 
         t = np.arange(0, duration, dt)
-        t_centered = t - duration/2  # Center the Gaussian
+        # t_centered = t - duration/2  # Center the Gaussian
+        t_centered = t
 
         kernel = np.exp(-0.5 * ((t_centered-delay) / sigma)**2)
         
-
-        
-        if delay > 0:
-            delay_steps = int(delay / dt)
-            kernel = np.pad(kernel, (delay_steps, 0), mode='constant')
-            t = np.arange(0, len(kernel) * dt, dt)
-        # Normalize to have area = 1
         kernel = kernel / (np.sum(np.abs(kernel)) )
             
         return kernel, t_centered

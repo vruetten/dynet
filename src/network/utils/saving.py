@@ -8,7 +8,7 @@ def get_node_parameters(node) -> Dict[str, Any]:
     params = {
         'name': node.name,
         'type': node.__class__.__name__,
-        'initial_state': node.initial_state.tolist() if hasattr(node, 'initial_state') else [0.0],
+        'initial_state': node.initial_state.tolist() if hasattr(node, 'initial_state') and isinstance(node.initial_state, np.ndarray) else [float(node.initial_state)] if hasattr(node, 'initial_state') else [0.0],
         'noise_level': node.noise_level
     }
     
@@ -67,7 +67,7 @@ def save_network_to_files(network, y, t, base_filename):
     # Save network structure to JSON
     network_info = {
         'dt': network.dt,
-        'connectivity': network.connectivity.tolist(),
+        'connectivity': network.connectivity.tolist() if isinstance(network.connectivity, np.ndarray) else network.connectivity,
         'n_nodes': network.n_nodes
     }
     
