@@ -1,0 +1,32 @@
+description: 'test'
+output_dir: './data/generated_dataset/test/'
+verbose: True  # Whether to print verbose output
+
+simulation:
+
+  N_poisson: 4  # Number of Poisson nodes
+
+  N_exponential: 20  # Number of exponential nodes
+  N_exponential_groups: 3 # Number of groups of exponential nodes
+
+  N_oscillator: 10  # Number of oscillator nodes
+  N_oscillator_groups: 1 # Number of groups of oscillator nodes
+
+  N_gaussian_kernel: 0  # Number of gaussian kernel nodes
+  N_gaussian_kernel_groups: 3 # Number of groups of gaussian kernel nodes
+
+  N_damped_oscillation: 0  # Number of damped oscillation nodes
+  N_damped_oscillation_groups: 3 # Number of groups of damped oscillation nodes
+
+  N_bump: 0  # Number of bump nodes
+
+  N_alpha: 20  # Number of alpha nodes
+  N_alpha_groups: 3 # Number of groups of alpha nodes
+  N_biexponential: 0
+
+  T: 400  # Simulation duration
+  DT: 0.01  # Time step
+
+
+
+
