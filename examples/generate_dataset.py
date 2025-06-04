@@ -296,79 +296,24 @@ if __name__ == '__main__':
 
     # --- Plot results ---
     plotting.plot_results(t, y, labels, net)
-    #%%
+
     # make a raster plot of the activity
-    # raster_plot = plotting.raster_plot(t, y, labels, net)
-    # raster_plot.savefig(f"{base_filename}_raster.png")
     y_norm = (y-y.mean(axis=0))/y.std(axis=0)
     pl.figure()
     pl.imshow(y_norm, extent=[0, T, 0, n_total], cmap="gray", aspect="auto")
     pl.savefig(output_dir+"activity.png")
-    # pl.colorbar()
     pl.show()
     pl.close()
-    # %%
-
-    # pl.figure()
-    # pl.matshow(y_norm[:,:100])
-    # pl.show()
-    # pl.savefig(output_dir+"y_norm.png")
-    # pl.close()
-    # #%%
-
-
 
     # --- Save results ---
-    # output_dir = "data/generated_dataset"
-
     base_filename = os.path.join(output_dir, "network")
     metadata_df, activity_df = saving.save_network_data(net, y, t)
     metadata_df.to_csv(f"{base_filename}_metadata.csv", index=False)
     activity_df.to_csv(f"{base_filename}_activity.csv", index=False)
     print(f"Simulation completed. Results saved in: {output_dir}")
 
-
-    #%%
-
-    ### FORMAT DATA for GNN
+    # Format data for GNN
     import pandas as pd
     # merge metadata_df and activity_df on "node_id" and index of activity_df
     merged_df = pd.merge(activity_df, metadata_df, left_on="node_id", right_on="node_id", how="left")
     mylist = [group for _, group in merged_df.groupby("time")]
-
-    # %%
-
-    #%%
-
-
-
-
-
-
-
-
-
-
-
-    # conn = np.zeros((n_total, n_total))
-    # conn[1,0] = 1.0
-    # # For each kernel group, connect all its nodes to all Poisson nodes
-    # for indices in node_indices_by_kernel:
-    #     for idx in indices:
-    #         for pidx in range(M):
-    #             conn[idx, pidx] = 1.0
-
-    # theta = np.pi/2
-    # cos_theta = np.cos(theta)
-    # sin_theta = np.sin(theta)
-    # rotation_matrix2d = np.array([[cos_theta, -sin_theta],
-    #                               [sin_theta, cos_theta]])
-    # conn = np.zeros((n_total, n_total))
-    # conn[2:4,0] = 1.0
-    # conn[3:5, 3:5] = rotation_matrix2d
-
-
-
-    # Optionally, connect Poisson nodes to themselves (or not)
-    # for pidx in range(M):
-    #     conn[pidx, pidx] = 1.0
