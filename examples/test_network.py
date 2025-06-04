@@ -14,6 +14,7 @@ reload(nodes)
 reload(network)
 
 
+
 np.random.seed(123)
 # === Demo Usage ===
 
@@ -25,7 +26,7 @@ firing_rate = 0.3
 firing_rate = 1
 net.add_node(nodes.PoissonNode("Poisson", firing_rate=firing_rate))
 tau = 0.1
-# net.add_node(nodes.ExponentialNode("Exp1", tau=tau))
+net.add_node(nodes.ExponentialNode("Exp1", tau=tau))
 
 # Add a node with bump kernel (rise, sustain, decay)
 # tau_rise = 0.1
@@ -65,17 +66,17 @@ tau = 0.1
 # time_constant = 0.3 # exponential decay
 # net.add_node(nodes.FilteredExponentialNode("FiltExp", tau=tau, filter_kernel=kernel, dt=dt, noise_level=0.01))
 
-tau = 6
-freq = 1.0
-initial_state = 1
+# tau = 6
+# freq = 1.0
+# initial_state = 1
 
-net.add_node(nodes.OscillatorNode("Osc1", tau=tau, freq=freq, initial_state=initial_state))
+# net.add_node(nodes.OscillatorNode("Osc1", tau=tau, freq=freq, initial_state=initial_state))
 
 # net.add_node(nodes.FilteredOscillatorNode("FiltOsc", tau=2.0, freq=5.0, filter_kernel=np.sin(np.linspace(0, np.pi, 100)), dt=dt))
 
 n_nodes = net.n_nodes
 conn = np.zeros((n_nodes, n_nodes))
-conn[1:,0] = 0.0
+conn[1:,0] = 1
 # conn[0,0] = 0
 # conn[-1,:] =0.3
 

@@ -8,6 +8,7 @@ from importlib import reload
 
 
 # === Flexible Network ===
+
 class FlexibleNetwork:
     def __init__(self, dt: float):
         self.dt = dt
@@ -69,6 +70,7 @@ class FlexibleNetwork:
                 for j in range(len(t)):
                     if np.random.rand() < node.firing_rate * self.dt:
                         poisson_states[i][j] = 1.0
+                        
 
         def system_derivative(t_now: float, y_vec: np.ndarray) -> np.ndarray:
             dydt = np.zeros_like(y_vec)
