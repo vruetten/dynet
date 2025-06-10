@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     config_file = '../../config/net_0.yaml'
     config = NeuronConfig.from_yaml(config_file)
-    print(config.pretty())
+    # print(config.pretty())
 
     n_runs = config.training.n_runs
     noise_level = config.training.noise_level
@@ -42,9 +42,9 @@ if __name__ == '__main__':
 
     model_type = config.model.model_type
 
-    folder_name = config.folder_name
+    data_folder_name = config.data_folder_name
 
-    path = '../../graphs_data/' + folder_name
+    path = '../../graphs_data/' + data_folder_name
     os.makedirs(path, exist_ok=True)
 
     ids = np.arange(n_nodes)

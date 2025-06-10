@@ -46,12 +46,6 @@ class PDE_Z1(pyg.nn.MessagePassing):
     def message(self, edge_index_i, edge_index_j, u_j, node_type_i, node_type_j):
 
         T = self.W
-
-        pos = torch.argwhere(edge_index_i == 10).flatten()
-        neighbor_id = edge_index_j[pos]
-        sum=torch.sum(T[10,neighbor_id][:,None]*u_j[pos])
-        print(sum)
-
         return T[edge_index_i, edge_index_j][:, None] * u_j
 
         T = self.W

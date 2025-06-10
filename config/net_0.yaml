@@ -1,4 +1,4 @@
-folder_name: "net_0"
+data_folder_name: "net_0"
 
 simulation:
   n_node_types: 5
@@ -17,7 +17,7 @@ simulation:
   frequency_range: [0.01, 0.1]
 
 model:
-  model_type: "PDE_Z1"
+  model_type: "PDE_N5"
 
 training:
   n_runs: 2
