@@ -4,7 +4,9 @@ Plotting utilities for neural network connectivity visualization.
 
 import matplotlib.pyplot as plt
 import numpy as np
-
+import seaborn as sns
+from matplotlib.patches import Rectangle
+import torch
 
 def plot_connectivity_with_types(connectivity, X, types, n_node_types, n_node_types_per_type,
                                  node_type_names=None, figsize=(12, 10), clim=None):
@@ -30,7 +32,7 @@ def plot_connectivity_with_types(connectivity, X, types, n_node_types, n_node_ty
     # Create type labels for each node
     type_labels = [node_type_names[int(X[i, 1])] for i in range(n_nodes)]
 
-    plt.figure(figsize=figsize)
+    fig = plt.figure(figsize=figsize)
     im = plt.imshow(connectivity, cmap='bwr', aspect='equal')
     plt.title('connectivity matrix', fontsize=18)
     plt.colorbar(im, shrink=0.5, label='weight')
@@ -50,7 +52,8 @@ def plot_connectivity_with_types(connectivity, X, types, n_node_types, n_node_ty
 
     # Adjust layout to prevent label cutoff
     plt.tight_layout()
-    plt.show()
+
+    return fig
 
 
 def plot_filter_coefficients(Fz, n_node_types, node_type_names=None, figsize=(10, 10)):
@@ -69,7 +72,7 @@ def plot_filter_coefficients(Fz, n_node_types, node_type_names=None, figsize=(10
     # Reshape for visualization
     Ftmp = Fz.reshape([n_node_types * n_node_types, -1])
 
-    plt.figure(figsize=figsize)
+    fig = plt.figure(figsize=figsize)
     plt.imshow(Ftmp, cmap='bwr')
     plt.title('filter coefficients', fontsize=18)
     plt.colorbar(shrink=0.5, label='coefficient value')
@@ -84,17 +87,13 @@ def plot_filter_coefficients(Fz, n_node_types, node_type_names=None, figsize=(10
 
     plt.yticks(range(len(pair_labels)), pair_labels)
     plt.tight_layout()
-    plt.show()
+
+    return fig
 
 
-import matplotlib.pyplot as plt
-import numpy as np
-import torch
-import seaborn as sns
-from matplotlib.patches import Rectangle
 
 
-def visualize_poisson_activities(activities, title="Neural Activities",
+def visualize_poisson_activities(activities,
                                  node_names=None, time_axis=None,
                                  style='comprehensive', figsize=(15, 10)):
     """
@@ -130,9 +129,9 @@ def visualize_poisson_activities(activities, title="Neural Activities",
 
         ax1 = plt.subplot(2,1,1)
         im = ax1.imshow(data, cmap='plasma', aspect='auto', interpolation='nearest')
-        ax1.set_ylabel('nodes')
-        ax1.set_xlabel('frames')
-        ax1.set_title(f'{title} - activity')
+        ax1.set_ylabel('nodes', fontsize=18)
+        ax1.set_xlabel('frame', fontsize=18)
+
 
         # cbar = plt.colorbar(im, ax=ax1, shrink=0.8)
         # cbar.set_label('activity')
@@ -148,64 +147,15 @@ def visualize_poisson_activities(activities, title="Neural Activities",
             ax5.plot(time_axis, data[i] + i * 0.5, color=colors[i],
                      linewidth=1.5, label=node_names[i])
 
-        ax5.set_xlabel('frame')
-        ax5.set_ylabel('activity (offset)')
-        ax5.set_title(f'sample traces (first {n_show} nodes)')
-        ax5.legend(fontsize=8)
+        ax5.set_xlabel('frame', fontsize=18)
+        ax5.set_ylabel('activity (offset)', fontsize=18)
+        ax5.set_title(f'sample traces (first {n_show} nodes)', fontsize=18)
         ax5.grid(True, alpha=0.3)
 
         plt.tight_layout()
 
-
-
-    plt.show()
     return fig
 
-
-def compare_poisson_activities(activities_list, labels, figsize=(15, 8)):
-    """
-    Compare multiple Poisson activity matrices side by side.
-
-    Args:
-        activities_list: List of activity tensors
-        labels: List of labels for each activity matrix
-        figsize: Figure size
-    """
-    n_matrices = len(activities_list)
-    fig, axes = plt.subplots(2, n_matrices, figsize=figsize)
-
-    if n_matrices == 1:
-        axes = axes.reshape(-1, 1)
-
-    for i, (activities, label) in enumerate(zip(activities_list, labels)):
-        if torch.is_tensor(activities):
-            data = activities.detach().cpu().numpy()
-        else:
-            data = activities
-
-        # Heatmap
-        im = axes[0, i].imshow(data, cmap='viridis', aspect='auto')
-        axes[0, i].set_title(f'{label}\nActivity Heatmap')
-        axes[0, i].set_xlabel('Time')
-        axes[0, i].set_ylabel('Nodes')
-        plt.colorbar(im, ax=axes[0, i], shrink=0.8)
-
-        # Statistics
-        node_means = np.mean(data, axis=1)
-        axes[1, i].barh(range(len(node_means)), node_means, alpha=0.7)
-        axes[1, i].set_title(f'{label}\nMean Activity per Node')
-        axes[1, i].set_xlabel('Mean Activity')
-        axes[1, i].set_ylabel('Nodes')
-        axes[1, i].grid(True, alpha=0.3)
-
-    plt.tight_layout()
-    plt.show()
-    return fig
-
-
-import matplotlib.pyplot as plt
-import numpy as np
-import torch
 
 
 def visualize_oscillator_activities(activities, dt=1.0, title="Oscillator Activities",
@@ -244,7 +194,7 @@ def visualize_oscillator_activities(activities, dt=1.0, title="Oscillator Activi
         ax1 = plt.subplot(2,1,1)
         im = ax1.imshow(data, cmap='RdBu_r', aspect='auto', interpolation='bilinear')
         ax1.set_ylabel('oscillator')
-        ax1.set_xlabel('frame')
+        ax1.set_xlabel('time')
 
         n_ticks = min(8, n_frames // 10)
         if n_ticks > 1:
@@ -274,7 +224,7 @@ def visualize_oscillator_activities(activities, dt=1.0, title="Oscillator Activi
             # Add horizontal line at zero for each trace
             ax2.axhline(y=offset, color='gray', linestyle='--', alpha=0.3, linewidth=0.5)
 
-        ax2.set_xlabel('frame')
+        ax2.set_xlabel('time')
         ax2.set_ylabel('activity (stacked)')
         ax2.legend(fontsize=8, bbox_to_anchor=(1.05, 1), loc='upper left')
         ax2.grid(True, alpha=0.3)
@@ -284,4 +234,150 @@ def visualize_oscillator_activities(activities, dt=1.0, title="Oscillator Activi
 
     plt.show()
     return fig
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from matplotlib.animation import FuncAnimation
+
+
+# Assuming x_list is your list of arrays with length 100
+# Each element in x_list should be a 2D array where column 6 contains the activities
+
+def plot_neuron_activities(x_list, n_node_types_per_type, dt=0.01):
+    """
+    Plot neuron activities from column 6 of x_list over time
+
+    Parameters:
+    x_list: list of numpy arrays, each containing neuron data
+    dt: time step (default 0.01)
+    """
+
+    # Extract column 6 activities from all time frames
+    activities = []
+    for x in x_list:
+        activities.append(x[:, 6])  # Column 6 activities
+
+    activities = np.array(activities)  # Shape: (n_frames, n_neurons)
+    n_frames, n_neurons = activities.shape
+
+    excitation_neurons =  activities[:, 0:n_node_types_per_type[0]+n_node_types_per_type[1]]
+    activities =  activities[:, n_node_types_per_type[0]+n_node_types_per_type[1]:]
+
+
+    time = np.arange(n_frames) * dt
+    time = time[:activities.shape[0]]  # Ensure time matches activities length
+    fig = plt.figure(figsize=(15,15))
+
+    ax1 = plt.subplot(3, 1, 1)
+    im = ax1.imshow(excitation_neurons.T, aspect='auto', cmap='viridis',
+                    extent=[time[0], time[-1], 0, n_neurons])
+    ax1.set_xlabel('time',fontsize=18)
+    ax1.set_ylabel('excitation neurons',fontsize=18)
+
+    ax2 = plt.subplot(3, 1, 2)
+    for i in range(min(10, n_neurons)):  # Plot first 10 neurons to avoid clutter
+        ax2.plot(time, activities[:, i], alpha=0.7, label=f'Neuron {i}')
+    ax2.set_xlabel('time',fontsize=18)
+    ax2.set_ylabel('activity',fontsize=18)
+    plt.xlim([time[0], time[-1]])
+    ax2.grid(True, alpha=0.3)
+
+    ax3 = plt.subplot(3, 1, 3)
+    im = ax3.imshow(activities.T, aspect='auto', cmap='viridis',
+                    extent=[time[0], time[-1], 0, n_neurons])
+    ax3.set_xlabel('time',fontsize=18)
+    ax3.set_ylabel('neuron',fontsize=18)
+
+    plt.tight_layout()
+    return fig
+
+
+def plot_activity_evolution(x_list, neuron_indices=None, dt=0.01):
+    """
+    Plot activity evolution for specific neurons
+
+    Parameters:
+    x_list: list of numpy arrays
+    neuron_indices: list of neuron indices to plot (default: first 5)
+    dt: time step
+    """
+
+    activities = np.array([x[:, 6] for x in x_list])
+    n_frames, n_neurons = activities.shape
+    time = np.arange(n_frames) * dt
+
+    if neuron_indices is None:
+        neuron_indices = list(range(min(5, n_neurons)))
+
+    plt.figure(figsize=(12, 8))
+
+    for i, idx in enumerate(neuron_indices):
+        plt.subplot(len(neuron_indices), 1, i + 1)
+        plt.plot(time, activities[:, idx], 'b-', linewidth=1.5)
+        plt.ylabel(f'Neuron {idx}\nActivity')
+        plt.grid(True, alpha=0.3)
+
+        if i == 0:
+            plt.title('Individual Neuron Activity Evolution')
+        if i == len(neuron_indices) - 1:
+            plt.xlabel('Time')
+
+    plt.tight_layout()
+    return plt.gcf()
+
+
+def create_activity_animation(x_list, dt=0.01, interval=100):
+    """
+    Create an animated plot showing activity evolution
+
+    Parameters:
+    x_list: list of numpy arrays
+    dt: time step
+    interval: animation interval in milliseconds
+    """
+
+    activities = np.array([x[:, 6] for x in x_list])
+    n_frames, n_neurons = activities.shape
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+
+    # Setup for line plot
+    line, = ax1.plot([], [], 'b-', linewidth=2)
+    ax1.set_xlim(0, n_neurons)
+    ax1.set_ylim(np.min(activities), np.max(activities))
+    ax1.set_xlabel('Neuron Index')
+    ax1.set_ylabel('Activity')
+    ax1.set_title('Current Frame Activities')
+    ax1.grid(True, alpha=0.3)
+
+    # Setup for time series
+    time = np.arange(n_frames) * dt
+    ax2.set_xlim(time[0], time[-1])
+    ax2.set_ylim(np.min(activities), np.max(activities))
+    ax2.set_xlabel('Time')
+    ax2.set_ylabel('Mean Activity')
+    ax2.set_title('Population Mean Over Time')
+    ax2.grid(True, alpha=0.3)
+
+    mean_line, = ax2.plot([], [], 'r-', linewidth=2)
+    current_time_line = ax2.axvline(x=0, color='black', linestyle='--', alpha=0.7)
+
+    def animate(frame):
+        # Update current frame activities
+        line.set_data(range(n_neurons), activities[frame, :])
+
+        # Update time series up to current frame
+        current_time = time[:frame + 1]
+        current_mean = np.mean(activities[:frame + 1, :], axis=1)
+        mean_line.set_data(current_time, current_mean)
+        current_time_line.set_xdata([time[frame]])
+
+        ax1.set_title(f'Frame {frame} - Time: {time[frame]:.3f}')
+
+        return line, mean_line, current_time_line
+
+    anim = FuncAnimation(fig, animate, frames=n_frames, interval=interval, blit=True)
+    return fig, anim
 

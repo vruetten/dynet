@@ -135,7 +135,7 @@ def create_connectivity(types: int, n_nodes: int, connectivity_filling_factor: f
     if len(pos) > 0:
         connectivity[pos[:, None], :] = 0.0  # Remove connections between node types < 2
 
-    mask = (connectivity != 0).float()
+    mask = (connectivity.t() != 0).float()
     edge_index = mask.nonzero().t().contiguous()
 
     return connectivity, edge_index
