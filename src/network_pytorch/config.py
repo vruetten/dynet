@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import yaml
 from pydantic import BaseModel, ConfigDict
 
@@ -12,6 +12,9 @@ class SimulationConfig(BaseModel):
     filter_length_max: int
     n_frames: int
     dt: float
+    rate_range: Tuple[float, float]
+    amplitude_range: Tuple[float, float]
+    frequency_range: Tuple[float, float]
 
 
 class ModelConfig(BaseModel):

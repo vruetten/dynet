@@ -36,6 +36,9 @@ if __name__ == '__main__':
     filter_length_max = config.simulation.filter_length_max
     n_frames = config.simulation.n_frames
     dt = config.simulation.dt
+    rate_range = config.simulation.rate_range  # (0.01, 0.05)
+    amplitude_range = config.simulation.amplitude_range  # (0.5, 1.5)
+    frequency_range = config.simulation.frequency_range
 
     model_type = config.model.model_type
 
@@ -65,13 +68,14 @@ if __name__ == '__main__':
     for run in range(n_runs):
 
         if n_node_types_per_type[0]>0:
-            poisson_activities = create_poisson_activities(n_node_types_per_type[0], n_frames, device)
+            poisson_activities = create_poisson_activities(n_nodes=n_node_types_per_type[0], n_frames=n_frames, rate_range=rate_range, device=device)
+
             fig = visualize_poisson_activities(poisson_activities, style='comprehensive')
             plt.savefig(path + f'/poisson_activities_{run}.png', dpi=300)
             plt.close(fig)
 
         if n_node_types_per_type[1]>0:
-            oscillator_activities = create_oscillator_activities(n_nodes=n_node_types_per_type[1], n_frames=n_frames, dt=dt, amplitude_range=(0.5, 1.5), frequency_range = (0.01, 0.1), phase_randomize=True, device=device)
+            oscillator_activities = create_oscillator_activities(n_nodes=n_node_types_per_type[1], n_frames=n_frames, dt=dt, amplitude_range=amplitude_range, frequency_range = frequency_range, phase_randomize=True, device=device)
             fig = visualize_oscillator_activities(activities=oscillator_activities, dt=1, style='comprehensive')
             plt.savefig(path + f'/poisson_activities_{run}.png', dpi=300)
             plt.close(fig)

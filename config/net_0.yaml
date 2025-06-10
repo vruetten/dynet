@@ -10,8 +10,11 @@ simulation:
     - moving_avg
   n_node_types_per_type: [5, 0, 4, 5, 6]
   filter_length_max: 5
-  n_frames: 200
+  n_frames: 300
   dt: 1.0
+  rate_range: [0.01, 0.05]
+  amplitude_range: [0.5, 1.5]
+  frequency_range: [0.01, 0.1]
 
 model:
   model_type: "PDE_Z1"

@@ -46,7 +46,7 @@ def create_filter_bank(n_node_types, node_type_names, filter_length_max, device)
     return Fz
 
 
-def create_poisson_activities(n_nodes, n_frames, device):
+def create_poisson_activities(n_nodes, n_frames, rate_range, device):
     """
     Create a tensor of shape (n_nodes, n_frames) with Poisson distributed values.
     Each node has a random amplitude between 0.1 and 1.0 and a random rate between 0.01 and 0.05.
@@ -63,7 +63,10 @@ def create_poisson_activities(n_nodes, n_frames, device):
     amplitudes = torch.rand(n_nodes, device=device) * 0.9 + 0.1  # 0.1 to 1.0
 
     # Random rates between 0.01 and 0.05 for each node
-    rates = torch.rand(n_nodes, device=device) * 0.04 + 0.01  # 0.01 to 0.05
+
+    rate_min, rate_max = rate_range
+    rates = torch.rand(n_nodes, device=device) * (rate_max - rate_min) + rate_min
+    # rates = torch.rand(n_nodes, device=device) * 0.04 + 0.01  # 0.01 to 0.05
 
     # Create Poisson distributed activities
     # Each node gets its own rate parameter expanded across all frames
