@@ -127,6 +127,7 @@ def create_oscillator_activities(n_nodes, n_frames, dt=1.0, amplitude_range=(0.5
 
     return oscillatory_activities
 
+
 def create_connectivity(types: int, n_nodes: int, connectivity_filling_factor: float, device: str = 'cpu'):
     connectivity = torch.randn((n_nodes, n_nodes), dtype=torch.float32, device=device)
     connectivity = connectivity / np.sqrt(n_nodes)
@@ -142,6 +143,7 @@ def create_connectivity(types: int, n_nodes: int, connectivity_filling_factor: f
     edge_index = mask.nonzero().t().contiguous()
 
     return connectivity, edge_index
+
 
 def get_equidistant_points(n_points=1024, device=None):
     indices = np.arange(0, n_points, dtype=float) + 0.5

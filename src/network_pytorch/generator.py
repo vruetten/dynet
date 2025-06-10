@@ -10,7 +10,7 @@ from tqdm import trange
 import os
 
 from plot_utils import *
-from utils import *
+from network_utils import *
 from PDE_Z1 import *
 from config import *
 

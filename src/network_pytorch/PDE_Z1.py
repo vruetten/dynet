@@ -37,21 +37,28 @@ class PDE_Z1(pyg.nn.MessagePassing):
         node_type = x[:, 5].long()
         u = x[:, 6:7]
 
-        msg = self.g * self.propagate(edge_index, u=u, node_type=node_type[:,None])
+        msg = self.propagate(edge_index, u=u, node_type=node_type[:,None])
 
-        du = msg - u/5
+        du = self.g * msg - u/5
 
         return du
 
     def message(self, edge_index_i, edge_index_j, u_j, node_type_i, node_type_j):
 
         T = self.W
-        return T[edge_index_i, edge_index_j][:, None] * u_j
 
         pos = torch.argwhere(edge_index_i == 10).flatten()
         neighbor_id = edge_index_j[pos]
-        neighbor_activity = u_j[pos]
+        sum=torch.sum(T[10,neighbor_id][:,None]*u_j[pos])
+        print(sum)
 
+        return T[edge_index_i, edge_index_j][:, None] * u_j
+
+        T = self.W
+        pos = torch.argwhere(edge_index_i == 10).flatten()
+        neighbor_id = edge_index_j[pos]
+        sum = torch.sum(T[10, neighbor_id][:, None] * u_j[pos])
+        print(sum)
         matplotlib.use("Qt5Agg")
         plt.imshow(self.W.detach().cpu().numpy(), cmap='hot', interpolation='nearest')
 
