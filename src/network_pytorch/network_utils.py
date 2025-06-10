@@ -2,6 +2,127 @@ import torch
 import numpy as np
 from dataclasses import dataclass
 
+def create_filter_bank(n_node_types, node_type_names, filter_length_max, device):
+    Fz = np.zeros((n_node_types, n_node_types, 2, filter_length_max))
+    types = {}
+    for i in range(n_node_types):
+        types[i] = {}
+
+    types[0]['type'] = node_type_names[0]
+    types[0]['dt'] = np.ones(n_node_types)*0.01
+    types[0]['rate'] = np.random.rand(n_node_types)*0.01
+
+    types[1]['type'] = node_type_names[1]
+    types[1]['dt'] = np.ones(n_node_types)*0.01
+    types[1]['frequency'] = np.random.rand(n_node_types)
+
+    types[2]['type'] = node_type_names[2]
+    types[2]['tau'] = np.random.rand(n_node_types)
+    types[2]['dt'] = np.ones(n_node_types)*0.01
+
+    types[3]['type'] = node_type_names[3]
+    types[3]['tau'] = np.random.rand(n_node_types)*0.01
+    types[3]['dt'] = np.ones(n_node_types)*0.01
+
+    types[4]['type'] = node_type_names[4]
+    types[4]['window_size'] = np.random.randint(1, 4, n_node_types)
+    types[4]['dt'] = np.ones(n_node_types)*0.01
+
+    for i in range(n_node_types):
+        if types[i]['type'] in ['poisson', 'oscillator']:
+            continue
+        for j in range(n_node_types):
+            if types[i]['type'] == 'low_pass':
+                coefs = create_low_pass(types[i]['tau'][j], types[i]['dt'][j])
+            elif types[i]['type'] == 'high_pass':
+                coefs = create_high_pass(types[i]['tau'][j], types[i]['dt'][j])
+            elif types[i]['type'] == 'moving_average':
+                coefs = create_moving_average(types[i]['window_size'][j])
+            else:
+                continue
+            a, b = process_filter_coefficients(coefs, filter_length_max, device)
+            Fz[i, j, 0] = a
+            Fz[i, j, 1] = b
+    return Fz
+
+
+def create_poisson_activities(n_nodes, n_frames, device):
+    """
+    Create a tensor of shape (n_nodes, n_frames) with Poisson distributed values.
+    Each node has a random amplitude between 0.1 and 1.0 and a random rate between 0.01 and 0.05.
+
+    Args:
+        n_nodes: Number of nodes (first dimension)
+        n_frames: Number of time frames (second dimension)
+        device: Device to create tensors on
+
+    Returns:
+        torch.Tensor: Shape (n_nodes, n_frames) with Poisson activities
+    """
+    # Random amplitudes between 0.1 and 1.0 for each node
+    amplitudes = torch.rand(n_nodes, device=device) * 0.9 + 0.1  # 0.1 to 1.0
+
+    # Random rates between 0.01 and 0.05 for each node
+    rates = torch.rand(n_nodes, device=device) * 0.04 + 0.01  # 0.01 to 0.05
+
+    # Create Poisson distributed activities
+    # Each node gets its own rate parameter expanded across all frames
+    lambda_params = rates.unsqueeze(1).expand(n_nodes, n_frames)  # (n_nodes, n_frames)
+
+    # Generate Poisson samples
+    poisson_samples = torch.poisson(lambda_params)
+
+    # Scale by amplitude for each node
+    poisson_activities = poisson_samples * amplitudes.unsqueeze(1)
+
+    return poisson_activities
+
+
+def create_oscillator_activities(n_nodes, n_frames, dt=1.0, amplitude_range=(0.5, 1.5), frequency_range=(0.01, 0.1), phase_randomize=True, device=None):
+    """
+    Create a tensor of shape (n_nodes, n_frames) with oscillatory activities.
+    Each node has a random frequency between 0.1 and 1.0 Hz.
+
+    Args:
+        n_nodes: Number of nodes (first dimension)
+        n_frames: Number of time frames (second dimension)
+        device: Device to create tensors on
+        dt: Time step in seconds (default 1.0)
+        amplitude_range: Tuple of (min, max) amplitude for each oscillator
+        phase_randomize: Whether to randomize initial phases
+
+    Returns:
+        torch.Tensor: Shape (n_nodes, n_frames) with oscillatory activities
+    """
+    # Random frequencies between 0.1 and 1.0 Hz
+    freq_min, freq_max = frequency_range
+    frequencies = torch.rand(n_nodes, device=device) * (freq_max - freq_min) + freq_min
+
+    # Random amplitudes for each node
+    amp_min, amp_max = amplitude_range
+    amplitudes = torch.rand(n_nodes, device=device) * (amp_max - amp_min) + amp_min
+
+    # Time vector in seconds
+    t = torch.arange(n_frames, device=device, dtype=torch.float32) * dt
+
+    # Random phases if requested
+    if phase_randomize:
+        phases = torch.rand(n_nodes, device=device) * 2 * np.pi
+    else:
+        phases = torch.zeros(n_nodes, device=device)
+
+    # Create oscillatory activities
+    # frequencies: (n_nodes,) -> (n_nodes, 1)
+    # t: (n_frames,) -> (1, n_frames)
+    # phases: (n_nodes,) -> (n_nodes, 1)
+    freq_expanded = frequencies.unsqueeze(1)  # (n_nodes, 1)
+    phase_expanded = phases.unsqueeze(1)  # (n_nodes, 1)
+    amp_expanded = amplitudes.unsqueeze(1)  # (n_nodes, 1)
+
+    # Broadcasting: (n_nodes, 1) * (1, n_frames) = (n_nodes, n_frames)
+    oscillatory_activities = amp_expanded * torch.sin(2 * np.pi * freq_expanded * t + phase_expanded)
+
+    return oscillatory_activities
 
 def create_connectivity(types: int, n_nodes: int, connectivity_filling_factor: float, device: str = 'cpu'):
     connectivity = torch.randn((n_nodes, n_nodes), dtype=torch.float32, device=device)
@@ -19,6 +140,17 @@ def create_connectivity(types: int, n_nodes: int, connectivity_filling_factor: f
 
     return connectivity, edge_index
 
+def get_equidistant_points(n_points=1024, device=None):
+    indices = np.arange(0, n_points, dtype=float) + 0.5
+    r = np.sqrt(indices / n_points)
+    theta = np.pi * (1 + 5 ** 0.5) * indices
+    x, y = r * np.cos(theta), r * np.sin(theta)
+
+    pos = torch.tensor(np.stack((x, y), axis=1), dtype=torch.float32, device=device) / 2
+    perm = torch.randperm(pos.size(0))
+    pos = pos[perm]
+
+    return pos
 
 @dataclass
 class FilterCoefficients:
