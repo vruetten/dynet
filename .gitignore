@@ -45,3 +45,4 @@ data/*.json
 Thumbs.db 
 /examples/data/generated_dataset/
 /graphs_data/
+/log/

@@ -316,3 +316,17 @@ def process_filter_coefficients(coefs, filter_length_max, device='cpu'):
         a = torch.cat([a, torch.zeros(filter_length_max - len(a), dtype=torch.float32, device=device)])
 
     return a, b
+
+
+def to_numpy(tensor: torch.Tensor) -> np.ndarray:
+    """
+    Convert a PyTorch tensor to a NumPy array.
+
+    Args:
+        tensor (torch.Tensor): The PyTorch tensor to convert.
+
+    Returns:
+        np.ndarray: The NumPy array.
+    """
+    return tensor.detach().cpu().numpy()
+
