@@ -27,26 +27,27 @@ class PDE_Z1(pyg.nn.MessagePassing):
     def __init__(self, aggr_type=[], W=None, Fz = None, g=2.0)  :
         super(PDE_Z1, self).__init__(aggr=aggr_type)
 
-        self.W = W
-        self.Fz = Fz
-        self.g = g
+        self.W = W # connectivity
+        self.Fz = Fz # filter coefficients
+        self.g = g # gain
 
     def forward(self, data=[]):
-        x, edge_index = data.x, data.edge_index
+        x, edge_index = data.x, data.edge_index # two rows, first row is j (the sender) and second row is i (the receiver)
 
-        node_type = x[:, 5].long()
-        u = x[:, 6:7]
+        node_type = x[:, 5].long() # type
+        u = x[:, 6:7] # activity
 
-        msg = self.propagate(edge_index, u=u, node_type=node_type[:,None])
+        msg = self.propagate(edge_index, u=u, node_type=node_type[:,None])  # calls message function
 
-        du = self.g * msg - u/5
+        tau = 5
+        du = self.g * msg - u/tau # intrinsic dynamics with hard coded time constant 
 
         return du
 
     def message(self, edge_index_i, edge_index_j, u_j, node_type_i, node_type_j):
 
         T = self.W
-        return T[edge_index_i, edge_index_j][:, None] * u_j
+        return T[edge_index_i, edge_index_j][:, None] * u_j # u_j is the activity of the sender node 
 
         T = self.W
         pos = torch.argwhere(edge_index_i == 10).flatten()

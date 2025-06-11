@@ -19,11 +19,15 @@ if __name__ == '__main__':
 
     path = '../../graphs_data/'
     os.makedirs(path, exist_ok=True)
-
+    # print the current working directory
+    print(os.getcwd())
+    # go to location of this file
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    print(os.getcwd())
 
     config_file = '../../config/net_0.yaml'
     config = NeuronConfig.from_yaml(config_file)
-    # print(config.pretty())
+    print(config.pretty())
 
     n_runs = config.training.n_runs
     noise_level = config.training.noise_level
@@ -42,9 +46,9 @@ if __name__ == '__main__':
 
     model_type = config.model.model_type
 
-    data_folder_name = config.data_folder_name
+    folder_name = config.data_folder_name
 
-    path = '../../graphs_data/' + data_folder_name
+    path = '../../graphs_data/' + folder_name
     os.makedirs(path, exist_ok=True)
 
     ids = np.arange(n_nodes)
@@ -82,10 +86,10 @@ if __name__ == '__main__':
 
 
         N1 = torch.arange(n_nodes, dtype=torch.float32, device=device)
-        X1 = get_equidistant_points(n_nodes, device)
-        V1 = torch.zeros_like(X1)
-        T1 = torch.tensor(types, dtype=torch.float32, device=device)
-        H1 = torch.zeros_like(X1)
+        X1 = get_equidistant_points(n_nodes, device) # location
+        V1 = torch.zeros_like(X1) # velocity
+        T1 = torch.tensor(types, dtype=torch.float32, device=device) # type
+        H1 = torch.zeros_like(X1) # activity
         x_list = []
         y_list = []
 
