@@ -43,6 +43,7 @@ if __name__ == '__main__':
     rate_range = config.simulation.rate_range  # (0.01, 0.05)
     amplitude_range = config.simulation.amplitude_range  # (0.5, 1.5)
     frequency_range = config.simulation.frequency_range
+    connectivity_filling_factor = config.simulation.connectivity_filling_factor
 
     model_type = config.model.model_type
 
@@ -57,7 +58,7 @@ if __name__ == '__main__':
     # types = np.array([0,1,2,0,1,2])
     activities = np.random.randn(n_nodes)
 
-    connectivity_filling_factor = 0.9
+    
     connectivity, edge_index = create_connectivity(types, n_nodes, connectivity_filling_factor)
     fig = plot_connectivity_with_types(connectivity.numpy(), np.column_stack((ids, types, activities)), types, n_node_types, n_node_types_per_type,node_type_names=node_type_names, clim=[-0.03, 0.03])
     plt.savefig(path + '/connectivity.png', dpi=300)

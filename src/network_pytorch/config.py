@@ -15,6 +15,7 @@ class SimulationConfig(BaseModel):
     rate_range: Tuple[float, float]
     amplitude_range: Tuple[float, float]
     frequency_range: Tuple[float, float]
+    connectivity_filling_factor: float = 1
 
 
 class ModelConfig(BaseModel):

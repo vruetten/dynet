@@ -15,6 +15,7 @@ simulation:
   rate_range: [0.1, 0.5]
   amplitude_range: [0.5, 1.5]
   frequency_range: [0.01, 0.1]
+  connectivity_filling_factor: 0.1
 
 model:
   model_type: "PDE_N5"
